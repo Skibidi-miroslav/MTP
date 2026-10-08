@@ -1,0 +1,25 @@
+name: Build IPA
+on:
+  workflow_dispatch:
+  push:
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - run: brew install xcodegen
+      - run: xcodegen generate
+      - name: Build (без подписи, подпишет SideStore)
+        run: |
+          xcodebuild -project MiniChat.xcodeproj -scheme MiniChat -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build
+      - name: Pack IPA
+        run: |
+          mkdir Payload
+          cp -R build/Build/Products/Release-iphoneos/MiniChat.app Payload/
+          zip -qr MiniChat.ipa Payload
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MiniChat-ipa
+          path: MiniChat.ipa
