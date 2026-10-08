@@ -50,9 +50,13 @@ final class MiniChatModel {
         return out
     }
 
-    func reply(to text: String, temperature: Float = 0.5, maxLength: Int = 160) -> String {
-        let cleaned = text.lowercased().replacingOccurrences(of: "ё", with: "е")
-            .map { stoi[String($0)] != nil ? String($0) : " " }.joined()
+    func reply(to text: String, temperature: Float = 0.3, maxLength: Int = 160) -> String {
+        // как в обучении: нижний регистр, ё -> е, неизвестные и служебные символы -> пробел, не длиннее 120
+        let cleaned = String(text.lowercased().replacingOccurrences(of: "ё", with: "е").prefix(120))
+            .map { ch -> String in
+                let s = String(ch)
+                return (stoi[s] != nil && s != "\n" && s != "<" && s != ">") ? s : " "
+            }.joined()
         var h = [Float](repeating: 0, count: H)
         for c in ("> " + cleaned + "\n< ") { h = step(stoi[String(c)] ?? 0, h) }
         var out = ""
